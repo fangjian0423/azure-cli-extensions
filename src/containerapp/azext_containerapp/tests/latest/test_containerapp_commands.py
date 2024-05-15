@@ -2637,6 +2637,7 @@ class ContainerappRuntimeTests(ScenarioTest):
         create_containerapp_with_runtime_java_agent_args_and_check('--runtime=java', checks=[
             JMESPathCheck('properties.provisioningState', "Succeeded"),
             JMESPathCheck("properties.configuration.runtime.java.enableMetrics", False),
+            JMESPathCheckNotExists("properties.configuration.runtime.java.javaAgent")
         ])
 
         # Create container app with runtime=java and enable java agent
