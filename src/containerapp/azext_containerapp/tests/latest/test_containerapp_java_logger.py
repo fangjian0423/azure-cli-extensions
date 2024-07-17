@@ -42,6 +42,9 @@ class ContainerappJavaLoggerTests(ScenarioTest):
             JMESPathCheckNotExists("properties.configuration.runtime.java.javaAgent.logging")
         ])
 
+        # Invalid log level used when adding logger, allowed values: off, error, info, debug, trace, warn
+        self.cmd(f'containerapp java logger set --logger-name root --logger-level config -g {resource_group} -n {app}', expect_failure=True)
+
         # Add logger
         self.cmd(f'containerapp java logger set --logger-name root --logger-level debug -g {resource_group} -n {app}', checks=[
             JMESPathCheck("length([*])", 1),
@@ -127,6 +130,17 @@ class ContainerappJavaLoggerTests(ScenarioTest):
             JMESPathCheck('properties.configuration.runtime.java.javaAgent.logging.loggerSettings[1].logger',
                           "org.springframework.boot"),
             JMESPathCheck('properties.configuration.runtime.java.javaAgent.logging.loggerSettings[1].level', "debug")
+        ])
+
+        # When multiple --logger-names are set, the last one will overwrite all previous ones
+        self.cmd(f'containerapp java logger set --logger-name com.azure.spring --logger-level info --logger-name org.springframework.boot --logger-level debug -g {resource_group} -n {app}', checks=[
+            JMESPathCheck("length([*])", 3),
+            JMESPathCheck("[0].level", "debug"),
+            JMESPathCheck("[0].logger", "root"),
+            JMESPathCheck("[1].level", "debug"),
+            JMESPathCheck("[1].logger", "testpkg"),
+            JMESPathCheck("[2].level", "debug"),
+            JMESPathCheck("[2].logger", "org.springframework.boot")
         ])
 
         # Delete all loggers
